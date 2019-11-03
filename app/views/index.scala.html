@@ -1,0 +1,45 @@
+@(wsUrl: String)
+
+<!doctype html>
+<html lang="en">
+<head>
+    <title>BikeWeather to WS</title>
+    <style>
+        html {
+            font-family: sans-serif;
+        }
+    </style>
+    <script>
+        const ws = new WebSocket('@wsUrl');
+        ws.onopen = () => { document.getElementById('status').innerText = 'BikeWeather Data' };
+        ws.onmessage = (message) => {
+            const data = JSON.parse(message.data);
+
+            const template = document.getElementById('row-template');
+            const row = document.importNode(template.content, true);
+
+            for (const element of row.children) {
+                for (const key in data) {
+                    element.innerHTML = element.innerHTML.replace(new RegExp('{{' + key + '}}'), data[key]);
+                }
+            }
+
+            document.getElementById('rows').appendChild(row);
+        };
+        ws.onerror = (error) => { document.getElementById('status').innerText = 'Query error' };
+    </script>
+</head>
+<body>
+    <p id="status">Getting BikeWeather Data</p>
+    <table id="rows">
+        <tr>
+            <th>Bike</th><th>From Station</th><th>Start</th><th>Duration</th><th>Precipitation</th><th>Temperature</th>
+        </tr>
+        <tr id="row">
+            <template id="row-template">
+                <td>{{bike_id}}</td><td>{{station_id}}</td><td>{{ts}}</td><td>{{duration}}</td><td>{{prcp}}</td><td>{{temp}}</td>
+            </template>
+        </tr>
+    </table>
+</body>
+</html>
