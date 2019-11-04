@@ -16,7 +16,7 @@ import scala.util.Try
 class Application @Inject() extends InjectedController with Logging {
 
   def index = Action { implicit request =>
-    Ok(views.html.index(routes.Application.questions().webSocketURL()))
+    Ok(views.html.index(routes.Application.ws().webSocketURL()))
   }
 
   implicit val fieldValueListWrites = new Writes[(Schema, FieldValueList)] {
@@ -29,6 +29,7 @@ class Application @Inject() extends InjectedController with Logging {
           case LegacySQLTypeName.BOOLEAN => Try(fieldValue.getBooleanValue).map(JsBoolean).getOrElse(JsNull)
           case LegacySQLTypeName.STRING => Try(fieldValue.getStringValue).map(JsString).getOrElse(JsNull)
           case LegacySQLTypeName.INTEGER => Try(fieldValue.getLongValue).map(JsNumber(_)).getOrElse(JsNull)
+          case LegacySQLTypeName.FLOAT => Try(fieldValue.getDoubleValue).map(JsNumber(_)).getOrElse(JsNull)
           case _ => JsNull
         }
 

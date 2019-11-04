@@ -8,6 +8,14 @@
         html {
             font-family: sans-serif;
         }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+        }
     </style>
     <script>
         const ws = new WebSocket('@wsUrl');
@@ -33,13 +41,13 @@
     <p id="status">Getting BikeWeather Data</p>
     <table id="rows">
         <tr>
-            <th>Bike</th><th>From Station</th><th>Start</th><th>Duration</th><th>Precipitation</th><th>Temperature</th>
+            <th>Bike</th><th>From Station</th><th>Start</th><th>Actual Duration</th><th>Predicted Duration</th><th>Precipitation</th><th>Temperature</th>
         </tr>
-        <tr id="row">
-            <template id="row-template">
-                <td>{{bike_id}}</td><td>{{station_id}}</td><td>{{ts}}</td><td>{{duration}}</td><td>{{prcp}}</td><td>{{temp}}</td>
-            </template>
-        </tr>
+        <template id="row-template">
+            <tr>
+                <td>{{bike_id}}</td><td>{{start_station_id}}</td><td>{{ts}}</td><td>{{duration}}</td><td>{{prediction}}</td><td>{{prcp}}</td><td>{{temp}}</td>
+            </tr>
+        </template>
     </table>
 </body>
 </html>
