@@ -54,7 +54,8 @@ class Application @Inject() extends InjectedController with Logging {
 
   def ws = WebSocket.acceptOrResult[JsValue, JsValue] { _ =>
     val query = """
-                  |SELECT bike_id, start_station_id, end_station_id, ts, duration, prcp, temp, day_of_week, euclidean, loc_cross, max, min, dewp
+                  |SELECT bike_id, CAST(start_station_id AS STRING), CAST(end_station_id AS STRING), CAST(ts AS FLOAT64),
+                  |       duration, prcp, temp, CAST(day_of_week AS STRING), euclidean, loc_cross, max, min, dewp
                   |FROM `aju-vtests2.london_bikes_weather.view2_table2`
                   |ORDER BY ts
                   |LIMIT 100000
