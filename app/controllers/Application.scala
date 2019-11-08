@@ -30,6 +30,9 @@ class Application @Inject() extends InjectedController with Logging {
           case LegacySQLTypeName.STRING => Try(fieldValue.getStringValue).map(JsString).getOrElse(JsNull)
           case LegacySQLTypeName.INTEGER => Try(fieldValue.getLongValue).map(JsNumber(_)).getOrElse(JsNull)
           case LegacySQLTypeName.FLOAT => Try(fieldValue.getDoubleValue).map(JsNumber(_)).getOrElse(JsNull)
+            // add to the num as a terrible workaround to prevent the .0 from being stripped due to
+            // play-json_2.13-2.7.4.jar!/play/api/libs/json/jackson/JacksonJson.class#64
+          case LegacySQLTypeName.NUMERIC => Try(fieldValue.getNumericValue).map(_.add(BigDecimal(0.0001).bigDecimal)).map(JsNumber(_)).getOrElse(JsNull)
           case _ => JsNull
         }
 
@@ -38,24 +41,10 @@ class Application @Inject() extends InjectedController with Logging {
     }
   }
 
-  def tagsToArray(jsValue: JsValue): JsValue = {
-    jsValue.transform(
-      (__ \ "tags").json.update(
-        __.read[String].map { tags =>
-          JsArray(
-            tags.split("><").map { tag =>
-              JsString(tag.stripPrefix("<").stripSuffix(">"))
-            }
-          )
-        }
-      )
-    ).getOrElse(jsValue)
-  }
-
   def ws = WebSocket.acceptOrResult[JsValue, JsValue] { _ =>
     val query = """
-                  |SELECT bike_id, CAST(start_station_id AS STRING), CAST(end_station_id AS STRING), CAST(ts AS FLOAT64),
-                  |       duration, prcp, temp, CAST(day_of_week AS STRING), euclidean, loc_cross, max, min, dewp
+                  |SELECT bike_id, CAST(start_station_id AS STRING) start_station_id, CAST(end_station_id AS STRING) end_station_id, CAST(ts AS NUMERIC) ts,
+                  |       duration, prcp, temp, CAST(day_of_week AS STRING) day_of_week, euclidean, loc_cross, max, min, dewp
                   |FROM `aju-vtests2.london_bikes_weather.view2_table2`
                   |ORDER BY ts
                   |LIMIT 100000
@@ -66,7 +55,7 @@ class Application @Inject() extends InjectedController with Logging {
       Future.successful(Left(InternalServerError(t.getMessage)))
     }, { case (schema, questions) =>
       val questionSource = Source.fromIterator(() => questions.iterator)
-      val source = Source.tick(Duration.Zero, 1.second, schema).zip(questionSource).map(Json.toJson(_)).map(tagsToArray)
+      val source = Source.tick(Duration.Zero, 1.second, schema).zip(questionSource).map(Json.toJson(_))
       Future.successful(Right(Flow.fromSinkAndSource(Sink.ignore, source)))
     })
   }
